@@ -4,48 +4,79 @@ using UnityEngine;
 
 public class ControllerScript : MonoBehaviour
 {
-    CharacterController controller;
+    private CharacterController controller;
 
-    [SerializeField] public float walkSpeed = 5.0f;
-    [SerializeField] public float runSpeed = 10.0f;
-    [SerializeField] public float jumpHeight = 2.0f;
-    [SerializeField] public float gravity = -9.81f;
+    [SerializeField] public float walkSpeed = 20.0f; // Speed while walking
+    [SerializeField] public float runSpeed = 40.0f;  // Speed while running
+    [SerializeField] public float gravity = 9.81f;   // Gravity applied to the player
 
-    private Vector3 velocity;
-    public bool isGrounded;
+    public Transform cameraTransform; // Reference to the camera's transform
+    private Vector3 velocity; // Player's current velocity
+    public bool isGrounded; // Boolean to check if the player is grounded
 
-    void Start()
+    public float groundCheckDistance = 0.1f; // Distance to check for ground
+    public LayerMask groundLayer; // Layer to check against for ground
+
+    private void Start()
     {
         controller = GetComponent<CharacterController>();
+        transform.rotation = Quaternion.identity; // Resets the player's rotation
+        velocity = Vector3.zero; // Resets any velocity to zero
     }
 
-    void Update()
+    private void Update()
     {
-        isGrounded = controller.isGrounded;
+        // Check if the player is grounded using a sphere cast
+        isGrounded = Physics.CheckSphere(transform.position, groundCheckDistance, groundLayer);
 
-        if (isGrounded && velocity.y < 0) { velocity.y = -2f; }
+        // Reset vertical velocity if grounded
+        if (isGrounded)
+        {
+            if (velocity.y < 0)
+            {
+                velocity.y = -2f; // Prevents sticking to the ground
+            }
+        }
 
+        // Movement input
         float moveX = Input.GetAxis("Horizontal");
         float moveZ = Input.GetAxis("Vertical");
 
-        Vector3 move = transform.right * moveX + transform.forward * moveZ;
+        Vector3 cameraForward = cameraTransform.forward;
+        cameraForward.y = 0; // Ignore the y component for movement
+        cameraForward.Normalize();
 
-        // Determine speed (running or walking)
-        float currentSpeed = Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
+        // Create the movement direction vector
+        Vector3 moveDirection = (cameraForward * moveZ + cameraTransform.right * moveX).normalized;
 
-        // Apply movement to the CharacterController
-        controller.Move(move * currentSpeed * Time.deltaTime);
+        // Determine current speed: Only run if there is movement input
+        float currentSpeed = (moveDirection != Vector3.zero) && Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
 
-        // Jumping logic
-        if (Input.GetButtonDown("Jump") && isGrounded)
+        // Calculate horizontal movement
+        Vector3 move = moveDirection * currentSpeed * Time.deltaTime;
+
+        // Apply horizontal movement while keeping Y position fixed
+        Vector3 targetPosition = transform.position + new Vector3(move.x, 0, move.z); // Only change X and Z
+        controller.Move(targetPosition - transform.position); // Apply the movement
+
+        // Rotate player towards movement direction
+        if (moveDirection != Vector3.zero)
         {
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 720 * Time.deltaTime);
         }
 
-        // Apply gravity over time
-        velocity.y += gravity * Time.deltaTime;
+        // Apply gravity
+        if (!isGrounded)
+        {
+            velocity.y -= gravity * Time.deltaTime; // Apply downward force if needed
+        }
+        else
+        {
+            velocity.y = -2f; // Reset velocity if grounded to prevent floating
+        }
 
-        // Move the character based on gravity and vertical velocity
+        // Move the character based on the vertical velocity
         controller.Move(velocity * Time.deltaTime);
     }
 }
