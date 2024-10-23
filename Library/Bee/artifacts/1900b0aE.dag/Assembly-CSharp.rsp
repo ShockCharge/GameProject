@@ -388,6 +388,7 @@
 "Assets/Scripts/AnimatorScript.cs"
 "Assets/Scripts/CameraScript.cs"
 "Assets/Scripts/ControllerScript.cs"
+"Assets/Scripts/WeaponScript.cs"
 -langversion:9.0
 
 /deterministic

@@ -6,8 +6,8 @@ public class ControllerScript : MonoBehaviour
 {
     private CharacterController controller;
 
-    [SerializeField] public float walkSpeed = 20.0f; // Speed while walking
-    [SerializeField] public float runSpeed = 40.0f;  // Speed while running
+    [SerializeField] public float walkSpeed = 30.0f; // Speed while walking
+    [SerializeField] public float runSpeed = 60.0f;  // Speed while running
     [SerializeField] public float gravity = 9.81f;   // Gravity applied to the player
 
     public Transform cameraTransform; // Reference to the camera's transform
