@@ -6,16 +6,16 @@ public class ControllerScript : MonoBehaviour
 {
     private CharacterController controller;
 
-    [SerializeField] public float walkSpeed = 30.0f; // Speed while walking
-    [SerializeField] public float runSpeed = 60.0f;  // Speed while running
-    [SerializeField] public float gravity = 9.81f;   // Gravity applied to the player
+    [SerializeField] public float walkSpeed = 20.0f; // Speed while walking
+    [SerializeField] public float runSpeed = 40.0f;  // Adjusted speed while running
+    [SerializeField] public float jumpHeight = 5.0f; // Jump height
+    [SerializeField] public float gravity = 20.0f;   // Increased gravity for faster falling
+    [SerializeField] public float jumpCooldown = 2.0f; // Cooldown time for jumping
 
     public Transform cameraTransform; // Reference to the camera's transform
-    private Vector3 velocity; // Player's current velocity
-    public bool isGrounded; // Boolean to check if the player is grounded
-
-    public float groundCheckDistance = 0.1f; // Distance to check for ground
-    public LayerMask groundLayer; // Layer to check against for ground
+    public Vector3 velocity; // Player's current velocity
+    private bool canJump = true; // Flag to track jump availability
+    private float jumpTimer = 0f; // Timer for jump cooldown
 
     private void Start()
     {
@@ -26,18 +26,6 @@ public class ControllerScript : MonoBehaviour
 
     private void Update()
     {
-        // Check if the player is grounded using a sphere cast
-        isGrounded = Physics.CheckSphere(transform.position, groundCheckDistance, groundLayer);
-
-        // Reset vertical velocity if grounded
-        if (isGrounded)
-        {
-            if (velocity.y < 0)
-            {
-                velocity.y = -2f; // Prevents sticking to the ground
-            }
-        }
-
         // Movement input
         float moveX = Input.GetAxis("Horizontal");
         float moveZ = Input.GetAxis("Vertical");
@@ -50,33 +38,49 @@ public class ControllerScript : MonoBehaviour
         Vector3 moveDirection = (cameraForward * moveZ + cameraTransform.right * moveX).normalized;
 
         // Determine current speed: Only run if there is movement input
-        float currentSpeed = (moveDirection != Vector3.zero) && Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed;
+        float currentSpeed = (moveDirection != Vector3.zero && Input.GetKey(KeyCode.LeftShift)) ? runSpeed : walkSpeed;
 
         // Calculate horizontal movement
         Vector3 move = moveDirection * currentSpeed * Time.deltaTime;
 
-        // Apply horizontal movement while keeping Y position fixed
-        Vector3 targetPosition = transform.position + new Vector3(move.x, 0, move.z); // Only change X and Z
-        controller.Move(targetPosition - transform.position); // Apply the movement
+        // Apply horizontal movement
+        controller.Move(move); // Apply the movement
 
-        // Rotate player towards movement direction
-        if (moveDirection != Vector3.zero)
+        // Rotate player towards movement direction for A and D
+        if (moveX != 0)
         {
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 720 * Time.deltaTime);
         }
 
-        // Apply gravity
-        if (!isGrounded)
+        // Jump input with cooldown
+        if (Input.GetKeyDown(KeyCode.Space) && canJump)
         {
-            velocity.y -= gravity * Time.deltaTime; // Apply downward force if needed
-        }
-        else
-        {
-            velocity.y = -2f; // Reset velocity if grounded to prevent floating
+            velocity.y = Mathf.Sqrt(jumpHeight * 2f * gravity); // Calculate jump velocity
+            canJump = false; // Set cooldown
+            jumpTimer = jumpCooldown; // Reset timer
         }
 
-        // Move the character based on the vertical velocity
-        controller.Move(velocity * Time.deltaTime);
+        // Apply gravity
+        velocity.y -= gravity * Time.deltaTime; // Apply downward force
+
+        // Move the character based on the vertical velocity, maintaining horizontal speed
+        controller.Move(new Vector3(move.x, velocity.y * Time.deltaTime, move.z));
+
+        // Cooldown management
+        if (!canJump)
+        {
+            jumpTimer -= Time.deltaTime; // Decrease timer
+            if (jumpTimer <= 0)
+            {
+                canJump = true; // Reset jump availability
+            }
+        }
+
+        // Check if the player has landed
+        if (controller.isGrounded && velocity.y < 0)
+        {
+            velocity.y = -2f; // Prevent sticking to the ground
+        }
     }
 }

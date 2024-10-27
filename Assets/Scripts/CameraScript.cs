@@ -12,8 +12,8 @@ public class CameraScript : MonoBehaviour
     private float currentX = 0.0f;  // Rotation on the X-axis
     private float currentY = 0.0f;  // Rotation on the Y-axis
 
-    [SerializeField] public float sensitivityX = 4.0f;  // Sensitivity for mouse X movement
-    [SerializeField] public float sensitivityY = 2.0f;  // Sensitivity for mouse Y movement
+    [SerializeField] public float sensitivityX = 1.0f;  // Sensitivity for mouse X movement
+    [SerializeField] public float sensitivityY = 1.0f;  // Sensitivity for mouse Y movement
     [SerializeField] public float minYAngle = -20.0f;   // Minimum vertical angle
     [SerializeField] public float maxYAngle = 80.0f;    // Maximum vertical angle
 

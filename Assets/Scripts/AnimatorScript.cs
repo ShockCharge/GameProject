@@ -16,13 +16,13 @@ public class AnimatorScript : MonoBehaviour
     void Update()
     {
         // Walking Animation
-        if (Input.GetKey(KeyCode.W))
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.S))
         {
-            playerAnimation.SetBool("ForwardWalk", true);
+            playerAnimation.SetBool("Walk", true);
         }
         else
         {
-            playerAnimation.SetBool("ForwardWalk", false);
+            playerAnimation.SetBool("Walk", false);
         }
 
         // Running Animation
@@ -35,6 +35,20 @@ public class AnimatorScript : MonoBehaviour
             playerAnimation.SetBool("Run", false);
         }
 
+        // Jump Animation
+        if (playerControl.velocity.y > 0) // Jumping
+        {
+            playerAnimation.SetBool("Jump", true);
+        }
+        else if (playerControl.velocity.y < 0) // Falling
+        {
+            playerAnimation.SetBool("Jump", false);
+        }
+        else if (playerControl.velocity.y == 0) // On the ground
+        {
+            playerAnimation.SetBool("Jump", false);
+        }
+
         // Attack Animation (independent of movement)
         if (Input.GetMouseButtonDown(0))
         {
@@ -43,16 +57,6 @@ public class AnimatorScript : MonoBehaviour
         else
         {
             playerAnimation.SetBool("Attack", false);
-        }
-
-        // Shoot Animation (independent of movement)
-        if (Input.GetMouseButtonDown(1))
-        {
-            playerAnimation.SetBool("Shoot", true);
-        }
-        else
-        {
-            playerAnimation.SetBool("Shoot", false);
         }
     }
 }

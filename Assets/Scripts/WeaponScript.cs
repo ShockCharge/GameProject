@@ -11,14 +11,15 @@ public class WeaponScript : MonoBehaviour
 
     private GameObject equippedWeapon; // The currently equipped weapon
     private int currentWeaponIndex = 0; // Index to track the current weapon
+    [SerializeField] public float attackRadius = 7.0f; // Radius for attack detection
+    [SerializeField] public float destroyDelay = 1.0f; // Delay before the object disappears
+    private string hitTag = "hitTag"; // Tag for destructible objects
 
-    // Start is called before the first frame update
     void Start()
     {
         EquipWeapon();
     }
 
-    // Update is called once per frame
     void Update()
     {
         // Check for TAB key press to switch weapons
@@ -32,9 +33,14 @@ public class WeaponScript : MonoBehaviour
         {
             equippedWeapon.transform.localScale = Vector3.one * weaponSize; // Set the weapon size
         }
+
+        // Attack on mouse click (example: left mouse button)
+        if (Input.GetMouseButtonDown(0))
+        {
+            Attack();
+        }
     }
 
-    // Method to equip the weapon
     public void EquipWeapon()
     {
         if (equippedWeapon != null)
@@ -50,12 +56,34 @@ public class WeaponScript : MonoBehaviour
         equippedWeapon.transform.localRotation = Quaternion.Euler(0, weaponRotation, 0); // Set custom rotation
     }
 
-    // Method to switch to the next weapon in the array
     private void SwitchWeapon()
     {
         // Increment the index and wrap around if necessary
         currentWeaponIndex = (currentWeaponIndex + 1) % weaponPrefabs.Length;
 
         EquipWeapon(); // Equip the next weapon
+    }
+
+    private void Attack()
+    {
+        Vector3 attackPosition = weaponHolder.position;
+
+        // Detect hits within the attack radius
+        Collider[] hitColliders = Physics.OverlapSphere(attackPosition, attackRadius);
+
+        foreach (Collider hitCollider in hitColliders)
+        {
+            // Check if the hit collider has the specified tag
+            if (hitCollider.CompareTag(hitTag))
+            {
+                StartCoroutine(DestroyAfterDelay(hitCollider.gameObject)); // Destroy after delay
+            }
+        }
+    }
+
+    private IEnumerator DestroyAfterDelay(GameObject obj)
+    {
+        yield return new WaitForSeconds(destroyDelay); // Wait for the specified delay
+        Destroy(obj); // Destroy the object
     }
 }
